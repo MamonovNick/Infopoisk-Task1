@@ -11,91 +11,55 @@ namespace Infopoisk_1
 {
     class Document
     {
-        String Name;
-        int count;
+        public String Name;
+        public int Count;
     }
     class Program
     {
         static void Main(string[] args)
         {
-            List<Dictionary<string, int>> Docs = new List<Dictionary<string, int>>();
-            //List<string> DocLst = new List<string>() { "doc1", "doc2", "doc3", "query1", "query2", "query3" };
-            List<string> DocLst = new List<string>() { "doc3" };
+            List<List<List<Document>>> AllFiles = new List<List<List<Document>>>();
+            List<List<Document>> DocCollection;
+            List<string> DocLst = new List<string>() { "doc1", "doc2", "doc3", "query1", "query2", "query3" };
+
             foreach (string s in DocLst)
             {
-                Dictionary<string, int> Doc = new Dictionary<string, int>();
-
-                //ProcessStartInfo procInfo = new ProcessStartInfo();
-                //procInfo.FileName = "D://mystem.exe";
-                //procInfo.Arguments = "-c -s -d -n --format xml D://"+ s +".txt D://out"+ s +".xml";
-
-                //Process pr = Process.Start(procInfo);
-                //pr.WaitForExit();
-
+                DocCollection = new List<List<Document>>();
+                //Запуск mystem для текущего файла
+                ProcessStartInfo procInfo = new ProcessStartInfo();
+                procInfo.FileName = "D://mystem.exe";
+                procInfo.Arguments = "-c -s -d -n --format xml D://" + s + ".txt D://out" + s + ".xml";
+                Process pr = Process.Start(procInfo);
+                pr.WaitForExit();
+                //Загрузка полученного файла
                 XDocument xdoc = XDocument.Load("D://out" + s + ".xml");
 
-                Document doc_tmp = new Document();
+                List<Document> sentance;
 
                 foreach (XElement xelem in xdoc.Element("html").Element("body").Elements("se"))
                 {
-
                     //Действия с предложениями
-                    var smth = from xe in xelem.Elements("w")
-                               group xe by xe.Element("ana").Attribute("lex").Value into g
-                               let cc = g.Count()
-                               orderby cc descending
-                               select new
-                               {
-                                   Name = g.Key,
-                                   Count = cc,
-                                   //Names = from p in g select p
-                               };
+                    sentance = new List<Document>(from xe in xelem.Elements("w")
+                                                  where xe.HasElements
+                                                  group xe by xe.Element("ana").Attribute("lex").Value into g
+                                                  let cc = g.Count()
+                                                  orderby cc descending
+                                                  select new Document
+                                                  {
+                                                      Name = g.Key,
+                                                      Count = cc
+                                                  });
 
-                    foreach (var i in smth)
+                    foreach (var i in sentance)
                     {
                         Console.WriteLine("{0} - {1}", i.Name, i.Count);
                     }
                     Console.WriteLine("--------------------------------");
-                    //foreach (XElement xelem2 in xelem.Elements("w"))
-                    //{
-
-                    //    //XAttribute xattr = xelem2.Attribute("lex");
-                    //    //Console.WriteLine(xattr);
-                    //    Console.WriteLine(xelem2.Element("ana").Attribute("lex").Value);
-                    //}
-
+                    DocCollection.Add(sentance);
                 }
-
-                //XmlDocument xDoc = new XmlDocument();
-                //xDoc.Load("D://out" + s + ".xml");
-                //// получаем корневой элемент
-                //XmlNode xRoot = xDoc.DocumentElement.FirstChild;
-                //// обход всех узлов в корневом элементе
-                //foreach (XmlNode xnode in xRoot)
-                //{
-                //    //<se>
-                //    foreach (XmlNode childnode in xnode.ChildNodes)
-                //    {
-                //        //<w>
-                //        foreach (XmlNode childnode2 in childnode.ChildNodes)
-                //        {
-                //            //<ana>
-                //            if (childnode2.Attributes != null)
-                //            {
-                //                XmlNode attr = childnode2.Attributes.GetNamedItem("lex");
-                //                if (attr != null)
-                //                {
-                //                    Console.WriteLine(attr.Value);
-                //                    Doc.Add(attr.Value, 1);
-                //                }
-                //            }
-                //        }
-                //    }
-                //}
-                //Docs.Add(Doc);
-                //Doc = null;
+                AllFiles.Add(DocCollection);
             }
-            //Console.WriteLine();
+            //Работа с Коллекцией AllFiles
             Console.ReadLine();
         }   
     }
