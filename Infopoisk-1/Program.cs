@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,10 +26,16 @@ namespace Infopoisk_1
         static List<double> hdf;
         static List<double> wdq;
         static List<double> hdq;
-        static List<double> relevantList;
+        static Dictionary<int, double> relevantList;
 
         static void Main(string[] args)
         {
+            string path = @"D:/Report.txt";
+            FileInfo fileInf = new FileInfo(path);
+            if (fileInf.Exists)
+            {
+                fileInf.Delete();
+            }
             //заполнение коллекции документов
             foreach (string s in DocLst)
             {
@@ -39,7 +46,9 @@ namespace Infopoisk_1
             {
                 getIdf(i);
                 getRes(false, i);
+                PrintOut(i);
                 getRes(true, i);
+                PrintOut(i);
             }
             Console.ReadLine();
 
@@ -51,7 +60,8 @@ namespace Infopoisk_1
             //Запуск mystem для текущего файла
             //ProcessStartInfo procInfo = new ProcessStartInfo();
             //procInfo.FileName = "D://mystem.exe";
-            //procInfo.Arguments = "-c -s -d -n --format xml D://" + s + ".txt D://out" + s + ".xml";
+            ////procInfo.Arguments = "-c -s -d -n --format xml D://" + s + ".txt D://out" + s + ".xml";
+            //procInfo.Arguments = "-c --format xml D://" + s + ".txt D://out" + s + ".xml";
             //Process pr = Process.Start(procInfo);
             //pr.WaitForExit();
             //Загрузка полученного файла
@@ -70,11 +80,11 @@ namespace Infopoisk_1
                                               Name = g.Key,
                                               Count = cc
                                           });
-                foreach (var i in sentance)
-                {
-                    Console.WriteLine("{0} - {1}", i.Name, i.Count);
-                }
-                Console.WriteLine("--------------------------------");
+                //foreach (var i in sentance)
+                //{
+                //    Console.WriteLine("{0} - {1}", i.Name, i.Count);
+                //}
+                //Console.WriteLine("--------------------------------");
                 DocCollection.Add(sentance);
             }
             AllFiles.Add(DocCollection);
@@ -98,7 +108,7 @@ namespace Infopoisk_1
 
         static void getRes(bool b, int i)
         {
-            relevantList = new List<double>();
+            relevantList = new Dictionary<int, double>();
             hdf = new List<double>();
             double qhdf = 0;
             wdq = new List<double>();
@@ -107,8 +117,11 @@ namespace Infopoisk_1
             int df = 0;
             int qf = 0;
 
-            Console.WriteLine("==================================");
-            Console.WriteLine(b ? "With Idf" : "Without Idf");
+            using (StreamWriter sw = new StreamWriter("D:/Report.txt", true, System.Text.Encoding.Default))
+            {
+                sw.WriteLine("==================================");
+                sw.WriteLine(b ? "With Idf" : "Without Idf");
+            }
             for (int j = 0; j < AllFiles[i].Count; j++)
             {
                 int wdqSum = 0;
@@ -145,10 +158,40 @@ namespace Infopoisk_1
             }
             for (int j = 0; j < wdq.Count; j++)
             {
-                relevantList.Add(wdq[j] / hdq[j]);
-                Console.WriteLine(relevantList[j]);
+                relevantList.Add(j, wdq[j] / hdq[j]);
+                //Console.WriteLine(relevantList[j]);
             }
-            Console.WriteLine("++++++++++++++++++++++++++++++");
+            //Console.WriteLine("++++++++++++++++++++++++++++++");
+        }
+
+        static void PrintOut(int i)
+        {
+            using (StreamWriter sw = new StreamWriter("D:/Report.txt", true, System.Text.Encoding.Default))
+            {
+                var PrRel = from x in relevantList
+                            orderby x.Value descending, x.Key
+                            select x;
+                XmlDocument xDoc = new XmlDocument();
+                xDoc.Load("D://out" + DocLst[i] + ".xml");
+                XmlElement xRoot = xDoc.DocumentElement;
+                XmlNode xn = xRoot.SelectSingleNode("*");
+                foreach (var s in PrRel)
+                {
+                    sw.Write("{0} - ", s.Value);
+                    int k = s.Key + 1;
+                    XmlNode xl = xn.SelectSingleNode("se[" + k + "]");
+                    //Console.WriteLine(xl.SelectSingleNode("w[4]").Value);
+                    //Console.WriteLine(xl.InnerXml);
+                    //Console.ReadLine();
+                    foreach (XmlNode x in xl)
+                    {
+                        string txt = x.InnerText;
+                        sw.Write(txt + (x.HasChildNodes ? " " : ""));
+                    }
+                    sw.WriteLine();
+                    //Console.WriteLine(xl.ChildNodes.Count);
+                }
+            }
         }
     }
 }
