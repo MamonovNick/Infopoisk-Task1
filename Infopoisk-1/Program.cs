@@ -13,7 +13,7 @@ namespace Infopoisk_1
     class Word
     {
         public string Name;
-        public int Count;
+        public double Count;
         public Word() { Name = ""; Count = 0; }
         public Word(string str, int c = 0) { Name = str; Count = c; }
     }
@@ -58,12 +58,12 @@ namespace Infopoisk_1
         {
             DocCollection = new List<List<Word>>();
             //Запуск mystem для текущего файла
-            //ProcessStartInfo procInfo = new ProcessStartInfo();
-            //procInfo.FileName = "D://mystem.exe";
-            ////procInfo.Arguments = "-c -s -d -n --format xml D://" + s + ".txt D://out" + s + ".xml";
-            //procInfo.Arguments = "-c --format xml D://" + s + ".txt D://out" + s + ".xml";
-            //Process pr = Process.Start(procInfo);
-            //pr.WaitForExit();
+            ProcessStartInfo procInfo = new ProcessStartInfo();
+            procInfo.FileName = "D://mystem.exe";
+            //procInfo.Arguments = "-c -s -d -n --format xml D://" + s + ".txt D://out" + s + ".xml";
+            procInfo.Arguments = "-c --format xml D://" + s + ".txt D://out" + s + ".xml";
+            Process pr = Process.Start(procInfo);
+            pr.WaitForExit();
             //Загрузка полученного файла
             XDocument xdoc = XDocument.Load("D://out" + s + ".xml");
             List<Word> sentance; //все слова в предложении-документе, группированные и сортированные по встречаемости
@@ -80,11 +80,11 @@ namespace Infopoisk_1
                                               Name = g.Key,
                                               Count = cc
                                           });
-                //foreach (var i in sentance)
-                //{
-                //    Console.WriteLine("{0} - {1}", i.Name, i.Count);
-                //}
-                //Console.WriteLine("--------------------------------");
+                double sum = sentance.Sum(x => x.Count);
+                foreach(Word w in sentance)
+                {
+                    w.Count = w.Count / sum;
+                }
                 DocCollection.Add(sentance);
             }
             AllFiles.Add(DocCollection);
@@ -113,9 +113,9 @@ namespace Infopoisk_1
             double qhdf = 0;
             wdq = new List<double>();
             hdq = new List<double>();
-            int sum = 0;
-            int df = 0;
-            int qf = 0;
+            double sum = 0;
+            double df = 0;
+            double qf = 0;
 
             using (StreamWriter sw = new StreamWriter("D:/Report.txt", true, System.Text.Encoding.Default))
             {
@@ -124,7 +124,7 @@ namespace Infopoisk_1
             }
             for (int j = 0; j < AllFiles[i].Count; j++)
             {
-                int wdqSum = 0;
+                double wdqSum = 0;
                 foreach (Word w in AllFiles[i][j])
                 {
                     df = b ? w.Count * idf.Find(x => x.Name == w.Name).Count : w.Count;
@@ -135,7 +135,7 @@ namespace Infopoisk_1
                     Word tmp = AllFiles[i][j].Find(x => x.Name == w.Name);
                     if (tmp != null)
                     {
-                        int CN = idf.Find(x => x.Name == w.Name).Count;
+                        double CN = idf.Find(x => x.Name == w.Name).Count;
                         qf = b ? w.Count * CN : w.Count;
                         wdqSum += (b ? tmp.Count * CN : tmp.Count) * qf;
                     }
@@ -159,9 +159,7 @@ namespace Infopoisk_1
             for (int j = 0; j < wdq.Count; j++)
             {
                 relevantList.Add(j, wdq[j] / hdq[j]);
-                //Console.WriteLine(relevantList[j]);
             }
-            //Console.WriteLine("++++++++++++++++++++++++++++++");
         }
 
         static void PrintOut(int i)
@@ -180,16 +178,12 @@ namespace Infopoisk_1
                     sw.Write("{0} - ", s.Value);
                     int k = s.Key + 1;
                     XmlNode xl = xn.SelectSingleNode("se[" + k + "]");
-                    //Console.WriteLine(xl.SelectSingleNode("w[4]").Value);
-                    //Console.WriteLine(xl.InnerXml);
-                    //Console.ReadLine();
                     foreach (XmlNode x in xl)
                     {
                         string txt = x.InnerText;
                         sw.Write(txt + (x.HasChildNodes ? " " : ""));
                     }
                     sw.WriteLine();
-                    //Console.WriteLine(xl.ChildNodes.Count);
                 }
             }
         }
