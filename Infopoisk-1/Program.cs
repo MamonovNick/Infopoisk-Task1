@@ -2,11 +2,10 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Diagnostics;
 using System.Xml;
 using System.Xml.Linq;
+using System.Threading.Tasks;
 
 namespace Infopoisk_1
 {
@@ -14,8 +13,7 @@ namespace Infopoisk_1
     {
         public string Name;
         public double Count;
-        public Word() { Name = ""; Count = 0; }
-        public Word(string str, int c = 0) { Name = str; Count = c; }
+        public Word(string str = "", int c = 0) { Name = str; Count = c; }
     }
     class Program
     {
@@ -33,14 +31,10 @@ namespace Infopoisk_1
             string path = @"D:/Report.txt";
             FileInfo fileInf = new FileInfo(path);
             if (fileInf.Exists)
-            {
                 fileInf.Delete();
-            }
             //заполнение коллекции документов
             foreach (string s in DocLst)
-            {
                 getParseFile(s);
-            }
             //Работа с Коллекцией AllFiles
             for(int i = 0; i < 3; i++)
             {
@@ -50,8 +44,6 @@ namespace Infopoisk_1
                 getRes(true, i);
                 PrintOut(i);
             }
-            Console.ReadLine();
-
         }
 
         static void getParseFile(string s)
@@ -60,7 +52,6 @@ namespace Infopoisk_1
             //Запуск mystem для текущего файла
             ProcessStartInfo procInfo = new ProcessStartInfo();
             procInfo.FileName = "D://mystem.exe";
-            //procInfo.Arguments = "-c -s -d -n --format xml D://" + s + ".txt D://out" + s + ".xml";
             procInfo.Arguments = "-c --format xml D://" + s + ".txt D://out" + s + ".xml";
             Process pr = Process.Start(procInfo);
             pr.WaitForExit();
